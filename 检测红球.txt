@@ -1,0 +1,39 @@
+# -*- coding: utf-8 -*-
+import cv2
+import numpy as np
+
+#读取图像
+img1 = cv2.imread('hq.jpg')
+# 高斯滤波
+det = cv2.medianBlur(img1,3)
+#BGR转HSV
+hsv = cv2.cvtColor(img1,cv2.COLOR_BGR2HSV)
+#设置阈值
+lower_red = np.array([0,100,50])
+upper_red = np.array([120,255,255])
+mask = cv2.inRange(hsv,lower_red,upper_red)
+#进行位运算
+res = cv2.bitwise_and(det,det,mask=mask)
+#二值图像
+ret,binarys = cv2.threshold(mask,127,255,cv2.THRESH_BINARY)
+#显示原图像，掩模处理过后的图像，以及二值图像
+cv2.imshow("orign",img1)
+cv2.imshow('res',res)
+cv2.imshow("binarys",binarys)
+#膨胀操作
+#cv2.getStructuringElement,定义结构元素
+dilated = cv2.dilate(mask, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3)), iterations=2)
+#hough变换检测圆
+circles = cv2.HoughCircles(dilated, cv2.HOUGH_GRADIENT, 1, 100, param1=15, param2=7, minRadius=10, maxRadius=20)
+if circles is not None:
+    x, y, radius = circles[0][0]
+    #中心点坐标
+    center = (x, y)
+    #画圆
+    cv2.circle(img1, center, radius, (0, 255, 0), 1)
+    #画圆心
+    cv2.circle(img1,center,2,(0,255,0),2)
+print(center)
+cv2.imshow('result',img1)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
